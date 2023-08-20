@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Grading Submission Form</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js"></script>
+    <style>
+        #orderForm {
+            width: 8.5in;
+            height: 11in;
+            /* Add additional styling to control the appearance of the form here */
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #orderForm * {
+                visibility: visible;
+            }
+        }
+    </style>
+    <script>
+        function saveAsImage() {
+            var container = document.getElementById("orderForm");
+            html2canvas(container).then(function(canvas) {
+                var link = document.createElement('a');
+                link.href = canvas.toDataURL("image/png");
+                link.download = 'SubmissionForm.png';
+                link.click();
+            });
+        }
+        
+        function addPlayer() {
+            var container = document.getElementById("playersContainer");
+            var playerDiv = document.createElement("div");
+            playerDiv.className = "player";
+            playerDiv.innerHTML = `
+                <input type="text" placeholder="Player Name" required>
+                <input type="text" placeholder="Card Number" required>
+                <textarea placeholder="Relevant Information"></textarea>
+                <input type="file" placeholder="Front Image" required>
+                <input type="file" placeholder="Back Image" required><br>`;
+            container.appendChild(playerDiv);
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            var players = document.getElementsByClassName("player");
+            var numberOfCards = players.length;
+            var basePrice = 20 * numberOfCards;
+
+            if (numberOfCards >= 25) basePrice = 475 / 25 * numberOfCards;
+            if (numberOfCards >= 50) basePrice = 900 / 50 * numberOfCards;
+            if (numberOfCards >= 60) basePrice = 1100 / 60 * numberOfCards;
+            if (numberOfCards >= 75) basePrice = 1250 / 75 * numberOfCards;
+
+            var shipping = 20;
+            var salesTax = basePrice * 0.06;
+            var totalPrice = basePrice + shipping + salesTax;
+
+            document.getElementById("total").innerText = "Total: $" + totalPrice.toFixed(2);
+        }
+        
+        function saveAsPDF() {
+            var form = document.getElementById("orderForm");
+            var opt = {
+                margin: 10,
+                filename: 'SubmissionForm.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().from(form).set(opt).outputPdf().then(function(pdf) {
+                var link = document.createElement('a');
+                link.href = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
+                link.download = 'SubmissionForm.pdf';
+                link.click();
+            });
+        }
+    </script>
+</head>
+<body>
+    <button type="button" onclick="saveAsImage()">Save as Image</button>
+    <img src="path/to/your/image.png" alt="Your Logo" style="width: 200px;"><br>
+    <h3>Mailing Address:</h3>
+    <p>Christopher Dewey SVCG,<br>104 East 4th Street,<br>General Delivery for pickup with I.D,<br>Olustee, OK 73560</p>
+    <!-- Rest of your content -->
+    <form id="orderForm">
+        <div id="playersContainer"></div>
+        <button type="button" onclick="addPlayer()">Add Player</button><br>
+        <!-- Signature fields -->
+        <input type="text" placeholder="Your Signature" required>
+        <input type="text" placeholder="SVCG Signature" required><br>
+        <button type="submit">Submit for Grading</button>
+    </form>
+    <div id="total">Total: $0.00</div>
+    <!-- Rest of the code (pricing options, images, etc.) -->
+</body>
+</html>
