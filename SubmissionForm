@@ -11,92 +11,107 @@
         #orderForm {
             width: 8.5in;
             height: 11in;
-            /* Add additional styling to control the appearance of the form here */
         }
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #orderForm * {
-                visibility: visible;
-            }
+        input[name="cardNumber"] {
+            width: 50%;
+        }
+        #infoBox {
+            display: none;
+            border: 1px solid #000;
+            padding: 10px;
+            margin: 10px 0;
         }
     </style>
-    <script>
-        function saveAsImage() {
-            var container = document.getElementById("orderForm");
-            html2canvas(container).then(function(canvas) {
-                var link = document.createElement('a');
-                link.href = canvas.toDataURL("image/png");
-                link.download = 'SubmissionForm.png';
-                link.click();
-            });
-        }
-        
-        function addPlayer() {
-            var container = document.getElementById("playersContainer");
-            var playerDiv = document.createElement("div");
-            playerDiv.className = "player";
-            playerDiv.innerHTML = `
-                <input type="text" placeholder="Player Name" required>
-                <input type="text" placeholder="Card Number" required>
-                <textarea placeholder="Relevant Information"></textarea>
-                <input type="file" placeholder="Front Image" required>
-                <input type="file" placeholder="Back Image" required><br>`;
-            container.appendChild(playerDiv);
-            calculateTotal();
-        }
 
-        function calculateTotal() {
-            var players = document.getElementsByClassName("player");
-            var numberOfCards = players.length;
-            var basePrice = 20 * numberOfCards;
+<script>
+    var playerCount = 0;
 
-            if (numberOfCards >= 25) basePrice = 475 / 25 * numberOfCards;
-            if (numberOfCards >= 50) basePrice = 900 / 50 * numberOfCards;
-            if (numberOfCards >= 60) basePrice = 1100 / 60 * numberOfCards;
-            if (numberOfCards >= 75) basePrice = 1250 / 75 * numberOfCards;
+    function calculateTotal() {
+        var players = document.getElementsByClassName("player");
+        var numberOfCards = players.length;
+        var basePrice = 20 * numberOfCards;
 
-            var shipping = 20;
-            var salesTax = basePrice * 0.06;
-            var totalPrice = basePrice + shipping + salesTax;
+        if (numberOfCards >= 75) basePrice = 1250 + (numberOfCards - 75) * (1250 / 75);
+        else if (numberOfCards >= 60) basePrice = 1100 + (numberOfCards - 60) * (1100 / 60);
+        else if (numberOfCards >= 50) basePrice = 900 + (numberOfCards - 50) * (900 / 50);
+        else if (numberOfCards >= 25) basePrice = 475 + (numberOfCards - 25) * (475 / 25);
 
-            document.getElementById("total").innerText = "Total: $" + totalPrice.toFixed(2);
+        var shipping = 20;
+        var salesTax = basePrice * 0.06;
+        var totalPrice = basePrice + shipping + salesTax;
+        document.getElementById("total").innerText = "Total: $" + totalPrice.toFixed(2);
+    }
+
+    function saveAsPDF() {
+    var form = document.getElementById("orderForm");
+    var opt = {
+        margin: 10,
+        filename: 'SubmissionForm.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().from(form).set(opt).toPdf().get('pdf').then(function(pdf) {
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([pdf.output('blob')], { type: 'application/pdf' }));
+        link.download = 'SubmissionForm.pdf';
+        link.click();
+    });
+}
+
+
+function addPlayer() {
+    playerCount++;
+    var container = document.getElementById("playersContainer");
+    var playerDiv = document.createElement("div");
+    playerDiv.className = "player";
+    playerDiv.innerHTML = playerCount +
+        `<input type="text" placeholder="Player Name" required>
+        <input type="text" name="cardNumber" placeholder="Card Number" required>
+        <textarea placeholder="Ex: Prizm, Refractor #1/1 & Etc"></textarea>
+        <input type="file" placeholder="Front Image" required>
+        <input type="file" placeholder="Back Image" required><br>
+        <button type="button" onclick="removePlayer(this.parentElement)">Remove Player</button>`;
+    container.appendChild(playerDiv);
+    calculateTotal();
+}
+
+function removePlayer(playerDiv) {
+    var container = document.getElementById("playersContainer");
+    container.removeChild(playerDiv);
+    playerCount--;
+    calculateTotal();
+}
+
+
+
+function toggleInfo() {
+            var infoBox = document.getElementById('infoBox');
+            if (infoBox.style.display === 'none') {
+                infoBox.style.display = 'block';
+            } else {
+                infoBox.style.display = 'none';
+            }
         }
-        
-        function saveAsPDF() {
-            var form = document.getElementById("orderForm");
-            var opt = {
-                margin: 10,
-                filename: 'SubmissionForm.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().from(form).set(opt).outputPdf().then(function(pdf) {
-                var link = document.createElement('a');
-                link.href = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
-                link.download = 'SubmissionForm.pdf';
-                link.click();
-            });
-        }
-    </script>
+</script>
+
 </head>
 <body>
-    <button type="button" onclick="saveAsImage()">Save as Image</button>
-    <img src="path/to/your/image.png" alt="Your Logo" style="width: 200px;"><br>
+    <button onclick="toggleInfo()">Important Info</button>
+    <div id="infoBox">
+        The total will automatically adjust for you Rob. It adjusts every 25 cards to a lower adjusted number to reflect the discount submitting higher numbers of cards will give you. It also reflects a .06% sales tax and $20.00 return shipping. So unlike PSA we dont adjust to charge you more money as you submit more your total will go down and there is no adjusted rate. Remember if you submit Pat Tillman or Sean Taylor those cards will be graded free. **Within Reason** if you do send some in be sure to mention it. If you have any problems with the form do shoot me a message as this stuff is tricky but try and save it as a PDF when you send it back. Thank You. Or well I could just bring them to you that way I can get some pictures if you don't mind. I would expect no longer than 14 days from the day we PICK UP the shipment to have them graded for 
+    </div>
+    <button type="button" onclick="saveAsPDF()">Save as PDF</button>
+    <img src="https://raw.githubusercontent.com/southernvalueswork/SVCG-Form/main/SVCG.png" alt="Your Logo" style="width: 200px;"><br>
     <h3>Mailing Address:</h3>
-    <p>Christopher Dewey SVCG,<br>104 East 4th Street,<br>General Delivery for pickup with I.D,<br>Olustee, OK 73560</p>
-    <!-- Rest of your content -->
+    <p>General Delivery <br> Pickup With I.D <br>Christopher Dewey<br>Southern Values Card Grading<br>104 East 4th Street<br>Olustee, OK 73560</p>
     <form id="orderForm">
         <div id="playersContainer"></div>
         <button type="button" onclick="addPlayer()">Add Player</button><br>
-        <!-- Signature fields -->
         <input type="text" placeholder="Your Signature" required>
         <input type="text" placeholder="SVCG Signature" required><br>
-        <button type="submit">Submit for Grading</button>
+        <div id="total">Total: $0.00</div>
     </form>
-    <div id="total">Total: $0.00</div>
-    <!-- Rest of the code (pricing options, images, etc.) -->
 </body>
 </html>
+
